@@ -1,82 +1,120 @@
-# RECCE CVPR 2022
+# RECCE: Deepfake Detection Model
 
-:page_facing_up: End-to-End Reconstruction-Classification Learning for Face Forgery Detection
+This repository contains the implementation of a deepfake detection model that can work with multiple datasets.
 
-:boy: Junyi Cao, Chao Ma, Taiping Yao, Shen Chen, Shouhong Ding, Xiaokang Yang
+## Setup with Rye
 
-**Please consider citing our paper if you find it interesting or helpful to your research.**
-```
-@InProceedings{Cao_2022_CVPR,
-    author    = {Cao, Junyi and Ma, Chao and Yao, Taiping and Chen, Shen and Ding, Shouhong and Yang, Xiaokang},
-    title     = {End-to-End Reconstruction-Classification Learning for Face Forgery Detection},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-    month     = {June},
-    year      = {2022},
-    pages     = {4113-4122}
-}
+1. Install Rye if you haven't already:
+```bash
+curl -sSf https://rye-up.com/get | bash
 ```
 
-----
+2. Initialize the project and install dependencies:
+```bash
+rye sync
+```
 
-### Introduction
+3. Activate the virtual environment:
+```bash
+.venv/bin/activate
+```
 
-This repository is an implementation for *End-to-End Reconstruction-Classification Learning for Face Forgery Detection* presented in CVPR 2022. In the paper, we propose a novel **REC**onstruction-**C**lassification l**E**arning framework called **RECCE** to detect face forgeries. The code is based on Pytorch. Please follow the instructions below to get started.
+## Dataset Structure
 
+All datasets should follow this structure:
+```
+dataset_root/
+    train/
+        real/
+            image1.jpg
+            image2.jpg
+            ...
+        fake/
+            image1.jpg
+            image2.jpg
+            ...
+    val/
+        real/
+            ...
+        fake/
+            ...
+    test/
+        real/
+            ...
+        fake/
+            ...
+```
 
-### Motivation
+## Configuration Files
 
-Briefly, we train a reconstruction network over genuine images only and use the output of the latent feature by the encoder to perform binary classification. Due to the discrepancy in the data distribution between genuine and forged faces, the reconstruction differences of forged faces are obvious and also indicate the probably forged regions. 
+### 1. Dataset Configuration
 
+For each dataset, you need to modify the root values in `config/dataset/` to your actual dataset path. Here's an example for Celeb-DF:
 
-### Basic Requirements
-Please ensure that you have already installed the following packages.
-- [Pytorch](https://pytorch.org/get-started/previous-versions/) 1.7.1
-- [Torchvision](https://pytorch.org/get-started/previous-versions/) 0.8.2
-- [Albumentations](https://github.com/albumentations-team/albumentations#spatial-level-transforms) 1.0.3
-- [Timm](https://github.com/rwightman/pytorch-image-models) 0.3.4
-- [TensorboardX](https://pypi.org/project/tensorboardX/#history) 2.1
-- [Scipy](https://pypi.org/project/scipy/#history) 1.5.2
-- [PyYaml](https://pypi.org/project/PyYAML/#history) 5.3.1
+```yaml
+# config/dataset/celeb_df.yml
+train_cfg:
+  root: "../../final_dataset/01_celebdf_unaltered"  # Path to dataset root
 
-### Dataset Preparation
-- We include the dataset loaders for several commonly-used face forgery datasets, *i.e.,* [FaceForensics++](https://github.com/ondyari/FaceForensics), [Celeb-DF](https://www.cs.albany.edu/~lsw/celeb-deepfakeforensics.html), [WildDeepfake](https://github.com/deepfakeinthewild/deepfake-in-the-wild), and [DFDC](https://ai.facebook.com/datasets/dfdc). You can enter the dataset website to download the original data.
-- For FaceForensics++, Celeb-DF, and DFDC, since the original data are in video format, you should first extract the facial images from the sequences and store them. We use [RetinaFace](https://github.com/biubug6/Pytorch_Retinaface) to do this.
+test_cfg:
+  root: "../../final_dataset/01_celebdf_unaltered"
+```
 
-### Config Files
-- We have already provided the config templates in `config/`. You can adjust the parameters in the yaml files to specify a training process. More information is presented in [config/README.md](./config/README.md).
+### 2. Model Configuration
+
+Modify the following in `config/Recce.yml` for the model settings:
+
+```yaml
+# config/model/recce.yml
+name: CelebDF
+file: "./config/dataset/celeb_df.yml"  # Path to dataset config
+```
+
+## Running the Model
 
 ### Training
-- We use `torch.distributed` package to train the models, for more information, please refer to [PyTorch Distributed Overview](https://pytorch.org/tutorials/beginner/dist_overview.html).
-- To train a model, run the following script in your console. 
-```{bash}
-CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 --master_port 12345 train.py --config path/to/config.yaml
+```bash
+python train.py --config config/train/recce.yml 
 ```
-- `--config`: Specify the path of the config file. 
 
 ### Testing
-- To test a model, run the following script in your console. 
-```{bash}
-python test.py --config path/to/config.yaml
+1. Make sure you have a trained model checkpoint (`.pth` file)
+
+2. Run the test script:
+```bash
+python test.py --config config/train/recce.yml --ckpt path/to/your/checkpoint.pth
 ```
-- `--config`: Specify the path of the config file.
 
-### Inference
-- We provide the script in `inference.py` to help you do inference using custom data. 
-- To do inference, run the following script in your console.
-```{bash}
-python inference.py --bin path/to/model.bin --image_folder path/to/image_folder --device $DEVICE --image_size $IMAGE_SIZE
+3. For inference on custom images:
+```bash
+python inference.py --bin path/to/model.bin --image_folder path/to/image_folder --device cuda:0 --image_size 256
 ```
-- `--bin`: Specify the path of the model bin generated by the training script of this project.
-- `--image_folder`: Specify the directory of custom facial images. The script accepts images end with `.jpg` or `.png`.
-- `--device`: Specify the device to run the experiment, e.g., `cpu`, `cuda:0`.
-- `--image_size`: Specify the spatial size of input images.
-- The program will output the fake probability for each input image like this:
-    ```
-    path: path/to/image1.jpg           | fake probability: 0.1296      | prediction: real
-    path: path/to/image2.jpg           | fake probability: 0.9146      | prediction: fake
-    ```
-- Type `python inference.py -h` in your console for more information about available arguments.
 
+### Testing Options
+- `--config`: Path to the config file
+- `--ckpt`: Path to the model checkpoint
+- `--device`: Device to run on (cuda:0, cpu)
+- `--image_size`: Input image size (default: 256)
 
-### Acknowledgement
-- We thank Qiqi Gu for helping plot the schematic diagram of the proposed method in the manuscript.
+### Expected Output
+The test script will output metrics like accuracy, AUC, and AP scores. For inference, you'll see:
+```
+path: path/to/image1.jpg           | fake probability: 0.1296      | prediction: real
+path: path/to/image2.jpg           | fake probability: 0.9146      | prediction: fake
+```
+
+## Troubleshooting
+
+1. If you get CUDA errors:
+   - Make sure you have the correct CUDA version installed
+   - Check if your GPU is available: `nvidia-smi`
+   - Try using CPU by setting `--device cpu`
+
+2. If you get memory errors:
+   - Reduce the batch size in your config file
+   - Use a smaller image size
+   - Try using CPU if GPU memory is insufficient
+
+3. If you get import errors:
+   - Make sure you're in the virtual environment: `.venv/bin/activate`
+   - Try reinstalling dependencies: `rye sync`
