@@ -18,11 +18,19 @@ encoder_params = {
 class Recce(nn.Module):
     """ End-to-End Reconstruction-Classification Learning for Face Forgery Detection """
 
-    def __init__(self, num_classes, drop_rate=0.2):
+    def __init__(self, num_classes, drop_rate=0.2, device=None):
         super(Recce, self).__init__()
         self.name = "xception"
         self.loss_inputs = dict()
+        
+        # Set default tensor type for MPS if needed
+        if device is not None and device.type == 'mps':
+            torch.set_default_tensor_type('torch.FloatTensor')
+        
+        # Initialize encoder on the correct device
         self.encoder = encoder_params[self.name]["init_op"]()
+        
+        # Create all other components
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.dropout = nn.Dropout(drop_rate)
         self.fc = nn.Linear(encoder_params[self.name]["features"], num_classes)
@@ -54,6 +62,27 @@ class Recce(nn.Module):
             nn.Conv2d(64, 3, 1, 1, bias=False),
             nn.Tanh()
         )
+        
+        # Move everything to device if specified
+        if device is not None:
+            # First move the encoder
+            self.encoder = self.encoder.to(device)
+            for param in self.encoder.parameters():
+                param.data = param.data.to(device)
+            for buffer in self.encoder.buffers():
+                buffer.data = buffer.data.to(device)
+            
+            # Then move the rest of the model
+            self.to(device)
+            for param in self.parameters():
+                param.data = param.data.to(device)
+            for buffer in self.buffers():
+                buffer.data = buffer.data.to(device)
+                
+        # Print device information for debugging
+        print("\nModel initialization device info:")
+        print(f"Encoder device: {next(self.encoder.parameters()).device}")
+        print(f"Target device: {device}")
 
     def norm_n_corr(self, x):
         norm_embed = F.normalize(self.global_pool(x), p=2, dim=1)

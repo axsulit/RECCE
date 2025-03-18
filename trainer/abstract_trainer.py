@@ -32,7 +32,13 @@ class AbstractTrainer(object):
         self.best_step = 1
         self.start_step = 1
 
+        # Initialize base settings first
         self._initiated_settings(model_cfg, data_cfg, config_cfg)
+
+        # Set device from config if available
+        if config_cfg and 'device' in config_cfg:
+            self.device = config_cfg['device']
+            print(f"Using device from config: {self.device}")
 
         if stage == 'Train':
             self._train_settings(model_cfg, data_cfg, config_cfg)

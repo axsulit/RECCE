@@ -1,7 +1,7 @@
 import yaml
 import argparse
 
-from trainer import ExpMultiGpuTrainer
+from trainer.single_gpu_trainer import SingleGpuTrainer
 
 
 def arg_parser():
@@ -29,5 +29,5 @@ if __name__ == '__main__':
         config = yaml.load(config_file, Loader=yaml.FullLoader)
     config["config"]["local_rank"] = arg.local_rank
 
-    trainer = ExpMultiGpuTrainer(config, stage="Train")
+    trainer = SingleGpuTrainer(config, stage="Train")
     trainer.train()

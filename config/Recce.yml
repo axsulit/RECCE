@@ -19,7 +19,7 @@ config:
   id: FF++c40
   loss: binary_ce
   metric: Acc
-  debug: False
+  debug: True
 #  device: "cuda:1"
 #  ckpt: best_model_1000
 data:
@@ -27,7 +27,7 @@ data:
   val_batch_size: 64
   test_batch_size: 64
   name: FaceForensics
-  file: "./config/dataset/faceforensics.yml"
+  file: "./config/dataset/celeb_df.yml"
   train_branch: "train_cfg"
   val_branch: "test_cfg"
   test_branch: "test_cfg"
