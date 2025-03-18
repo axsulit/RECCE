@@ -1,17 +1,19 @@
 from .abstract_dataset import AbstractDataset
-from .faceforensics import FaceForensics
-from .wild_deepfake import WildDeepfake
-from .celeb_df import CelebDF
-from .dfdc import DFDC
+from .unified_dataset import UnifiedDataset
 
 LOADERS = {
-    "FaceForensics": FaceForensics,
-    "WildDeepfake": WildDeepfake,
-    "CelebDF": CelebDF,
-    "DFDC": DFDC,
+    "CelebDF": UnifiedDataset,
+    "FaceForensics": UnifiedDataset,
+    "WildDeepfake": UnifiedDataset,
 }
 
 
-def load_dataset(name="FaceForensics"):
-    print(f"Loading dataset: '{name}'...")
+def load_dataset(name="CelebDF"):
+    """
+    Load the specified dataset using the unified dataset loader.
+    Available datasets: CelebDF, FaceForensics, WildDeepfake
+    """
+    if name not in LOADERS:
+        raise ValueError(f"Dataset '{name}' not found. Available datasets: {list(LOADERS.keys())}")
+    print(f"Loading dataset: '{name}' using unified loader...")
     return LOADERS[name]

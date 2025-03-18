@@ -1,8 +1,6 @@
 train_cfg:
   root: "../../final_dataset/01_celebdf_unaltered"
   split: "train"
-  method: "all"  # One of ['all', 'Deepfakes', 'Face2Face', 'FaceSwap', 'NeuralTextures']
-  compression: "c40"  # One of ['c0', 'c23', 'c40']
   balance: True
   log_steps: 1000
   val_steps: 1000
@@ -22,8 +20,6 @@ train_cfg:
 test_cfg:
   root: "../../final_dataset/01_celebdf_unaltered"
   split: "test"
-  method: "all"  # One of ['all', 'Deepfakes', 'Face2Face', 'FaceSwap', 'NeuralTextures']
-  compression: "c40"  # One of ['c0', 'c23', 'c40']
   balance: False
   transforms:
     - name: "Resize"

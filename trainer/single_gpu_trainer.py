@@ -57,6 +57,7 @@ class SingleGpuTrainer(AbstractTrainer):
         self.local_rank = 0
 
     def _train_settings(self, model_cfg, data_cfg, config_cfg):
+        """Initialize training settings."""
         # debug mode: no log dir, no train_val operation.
         self.debug = config_cfg["debug"]
         print(f"Using debug mode: {self.debug}.")
@@ -76,7 +77,12 @@ class SingleGpuTrainer(AbstractTrainer):
         with open(train_dataset, "r") as f:
             options = yaml.load(f, Loader=yaml.FullLoader)
         train_options = options[branch]
+        # Add dataset name to the options
+        train_options['name'] = name
+        
+        # Create dataset with name
         self.train_set = load_dataset(name)(train_options)
+        
         # wrapped with data loader
         self.train_loader = data.DataLoader(self.train_set, shuffle=True,
                                           num_workers=data_cfg.get("num_workers", 4),
@@ -84,7 +90,10 @@ class SingleGpuTrainer(AbstractTrainer):
 
         # load validation dataset
         val_options = options[data_cfg["val_branch"]]
+        # Add dataset name to the validation options
+        val_options['name'] = name
         self.val_set = load_dataset(name)(val_options)
+        
         # wrapped with data loader
         self.val_loader = data.DataLoader(self.val_set, shuffle=True,
                                         num_workers=data_cfg.get("num_workers", 4),
@@ -126,26 +135,10 @@ class SingleGpuTrainer(AbstractTrainer):
         # load model
         self.num_classes = model_cfg["num_classes"]
         
-        # Create model
-        self.model = load_model(self.model_name)(**model_cfg)
+        # Create model with device parameter
+        self.model = load_model(self.model_name)(**model_cfg, device=self.device)
         
-        # Move model to device
-        self.model = self.model.to(self.device)
-        
-        # Force all model parameters to be on the same device
-        for param in self.model.parameters():
-            param.data = param.data.to(self.device)
-            
-        # Move all buffers to device as well
-        for buffer in self.model.buffers():
-            buffer.data = buffer.data.to(self.device)
-            
-        # Ensure all submodules are on the correct device
-        for module in self.model.modules():
-            if hasattr(module, 'to'):
-                module.to(self.device)
-                
-        # Ensure the model is in train mode
+        # Ensure model is in train mode
         self.model.train()
         
         # Verify device placement
