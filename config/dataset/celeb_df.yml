@@ -4,7 +4,7 @@ train_cfg:
   balance: True
   log_steps: 1000
   val_steps: 1000
-  num_steps: 92000
+  num_steps: 70000
   transforms:
     - name: "Resize"
       params:
