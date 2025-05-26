@@ -22,11 +22,9 @@
 
 This repository is an implementation for *End-to-End Reconstruction-Classification Learning for Face Forgery Detection* presented in CVPR 2022. In the paper, we propose a novel **REC**onstruction-**C**lassification l**E**arning framework called **RECCE** to detect face forgeries. The code is based on Pytorch. Please follow the instructions below to get started.
 
-
 ### Motivation
 
 Briefly, we train a reconstruction network over genuine images only and use the output of the latent feature by the encoder to perform binary classification. Due to the discrepancy in the data distribution between genuine and forged faces, the reconstruction differences of forged faces are obvious and also indicate the probably forged regions. 
-
 
 ### Basic Requirements
 Please ensure that you have already installed the following packages.
@@ -37,46 +35,93 @@ Please ensure that you have already installed the following packages.
 - [TensorboardX](https://pypi.org/project/tensorboardX/#history) 2.1
 - [Scipy](https://pypi.org/project/scipy/#history) 1.5.2
 - [PyYaml](https://pypi.org/project/PyYAML/#history) 5.3.1
+- [scikit-learn](https://scikit-learn.org/) (for evaluation metrics)
+- [seaborn](https://seaborn.pydata.org/) (for visualization)
 
 ### Dataset Preparation
-- We include the dataset loaders for several commonly-used face forgery datasets, *i.e.,* [FaceForensics++](https://github.com/ondyari/FaceForensics), [Celeb-DF](https://www.cs.albany.edu/~lsw/celeb-deepfakeforensics.html), [WildDeepfake](https://github.com/deepfakeinthewild/deepfake-in-the-wild), and [DFDC](https://ai.facebook.com/datasets/dfdc). You can enter the dataset website to download the original data.
-- For FaceForensics++, Celeb-DF, and DFDC, since the original data are in video format, you should first extract the facial images from the sequences and store them. We use [RetinaFace](https://github.com/biubug6/Pytorch_Retinaface) to do this.
-
-### Config Files
-- We have already provided the config templates in `config/`. You can adjust the parameters in the yaml files to specify a training process. More information is presented in [config/README.md](./config/README.md).
-
-### Training
-- We use `torch.distributed` package to train the models, for more information, please refer to [PyTorch Distributed Overview](https://pytorch.org/tutorials/beginner/dist_overview.html).
-- To train a model, run the following script in your console. 
-```{bash}
-CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 --master_port 12345 train.py --config path/to/config.yaml
+1. Download the Celeb-DF dataset from [here](https://www.cs.albany.edu/~lsw/celeb-deepfakeforensics.html)
+2. Extract facial images from videos using [RetinaFace](https://github.com/biubug6/Pytorch_Retinaface)
+3. Organize the dataset in the following structure:
 ```
-- `--config`: Specify the path of the config file. 
-
-### Testing
-- To test a model, run the following script in your console. 
-```{bash}
-python test.py --config path/to/config.yaml
+celeb-df-dataset/
+├── train/
+│   ├── real/
+│   │   └── [real face images]
+│   └── fake/
+│       └── [fake face images]
+├── val/
+│   ├── real/
+│   │   └── [real face images]
+│   └── fake/
+│       └── [fake face images]
+└── test/
+    ├── real/
+    │   └── [real face images]
+    └── fake/
+        └── [fake face images]
 ```
-- `--config`: Specify the path of the config file.
+
+### Project Structure
+```
+RECCE/
+├── config/
+│   ├── dataset/
+│   │   ├── dataset_paths.yml    # Dataset root location
+│   │   └── dataset_full.yml     # Full training configuration
+│   └── model/
+│       └── Recce.yml           # Model and training parameters
+├── dataset/
+│   └── generic_dataset.py      # Dataset loading and preprocessing
+├── model/
+│   └── network/
+│       └── Recce.py           # RECCE model architecture
+├── trainer/
+│   └── single_device_trainer.py # Training logic
+├── train_and_evaluate.py       # Combined training and evaluation script
+└── inference.py                # Inference on custom images
+```
+
+### Training and Evaluation
+We provide a single script that handles both training and evaluation. The script will:
+1. Train the model
+2. Save the best model checkpoint
+3. Evaluate on train, validation, and test splits
+4. Generate comprehensive metrics and visualizations
+
+To run the complete pipeline:
+```bash
+python train_and_evaluate.py --config config/model/Recce.yml
+```
+
+The results will be saved in `experiments/Recce/<exp_id>/` with:
+- `config.yml`: Training configuration
+- `best_model.pt`: Best model checkpoint
+- `evaluation_results.yml`: All metrics for train/val/test
+- Confusion matrix plots for each split
+- TensorBoard logs for training monitoring
+
+Monitor training progress:
+```bash
+tensorboard --logdir experiments/Recce
+```
 
 ### Inference
-- We provide the script in `inference.py` to help you do inference using custom data. 
-- To do inference, run the following script in your console.
-```{bash}
-python inference.py --bin path/to/model.bin --image_folder path/to/image_folder --device $DEVICE --image_size $IMAGE_SIZE
+To run inference on custom images:
+```bash
+python inference.py --bin path/to/best_model.pt --image_folder path/to/images --device cuda:0 --image_size 256
 ```
-- `--bin`: Specify the path of the model bin generated by the training script of this project.
-- `--image_folder`: Specify the directory of custom facial images. The script accepts images end with `.jpg` or `.png`.
-- `--device`: Specify the device to run the experiment, e.g., `cpu`, `cuda:0`.
-- `--image_size`: Specify the spatial size of input images.
-- The program will output the fake probability for each input image like this:
-    ```
-    path: path/to/image1.jpg           | fake probability: 0.1296      | prediction: real
-    path: path/to/image2.jpg           | fake probability: 0.9146      | prediction: fake
-    ```
-- Type `python inference.py -h` in your console for more information about available arguments.
 
+Arguments:
+- `--bin`: Path to the trained model checkpoint
+- `--image_folder`: Directory containing images to test
+- `--device`: Device to run inference on (cpu, cuda:0, etc.)
+- `--image_size`: Input image size
+
+The script will output predictions for each image:
+```
+path: image1.jpg | fake probability: 0.1296 | prediction: real
+path: image2.jpg | fake probability: 0.9146 | prediction: fake
+```
 
 ### Acknowledgement
 - We thank Qiqi Gu for helping plot the schematic diagram of the proposed method in the manuscript.
