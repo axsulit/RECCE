@@ -55,6 +55,7 @@ markupsafe==3.0.2
     # via werkzeug
 matplotlib==3.10.3
     # via recce
+    # via seaborn
 mpmath==1.3.0
     # via sympy
 networkx==3.4.2
@@ -66,9 +67,11 @@ numpy==2.2.6
     # via matplotlib
     # via opencv-python
     # via opencv-python-headless
+    # via pandas
     # via recce
     # via scikit-learn
     # via scipy
+    # via seaborn
     # via tensorboard
     # via tensorboardx
     # via torchvision
@@ -82,6 +85,8 @@ packaging==25.0
     # via matplotlib
     # via tensorboard
     # via tensorboardx
+pandas==2.2.3
+    # via seaborn
 pillow==11.2.1
     # via matplotlib
     # via torchvision
@@ -96,6 +101,9 @@ pyparsing==3.2.3
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via matplotlib
+    # via pandas
+pytz==2025.2
+    # via pandas
 pyyaml==6.0.2
     # via albumentations
     # via huggingface-hub
@@ -110,6 +118,8 @@ scikit-learn==1.6.1
 scipy==1.15.3
     # via albumentations
     # via scikit-learn
+seaborn==0.13.2
+    # via recce
 setuptools==80.8.0
     # via tensorboard
     # via torch
@@ -150,6 +160,8 @@ typing-extensions==4.13.2
     # via typing-inspection
 typing-inspection==0.4.1
     # via pydantic
+tzdata==2025.2
+    # via pandas
 urllib3==2.4.0
     # via requests
 werkzeug==3.1.3

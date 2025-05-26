@@ -133,3 +133,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 /celeb-df-dataset
+/test_results
