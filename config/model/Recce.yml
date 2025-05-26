@@ -1,0 +1,48 @@
+# Model configuration
+model:
+  name: "Recce"
+  num_classes: 1 
+
+# Training configuration
+config:
+  lambda_1: 0.1
+  lambda_2: 0.1
+  distribute:
+    backend: nccl
+  optimizer: "adam"
+  lr: 0.0002
+  weight_decay: 0.00001
+  scheduler: "StepLR"
+  step_size: 100  # Reduced for faster learning rate updates
+  gamma: 0.5
+  resume: False
+  resume_best: False
+  loss: "binary_ce"
+  metric: "Acc"
+  debug: false
+#  device: "cuda:1"
+#  ckpt: best_model_1000
+
+# Experiment configuration
+exp:
+  exp_id: "CelebDF_v1"  # Experiment identifier
+  loss: "binary_ce"
+  debug: false
+
+# Data configuration
+data:
+  train_batch_size: 8  # Reduced for MPS memory
+  val_batch_size: 8
+  test_batch_size: 8
+  dataset_file: "./config/dataset/dataset_full.yml"  # Using full dataset config
+
+# Training settings
+train:
+  num_epochs: 100  # Full training epochs
+  val_interval: 5  # Validate every 5 epochs
+  device: "mps"  # For Apple Silicon
+  distributed: false
+  backend: "gloo"
+  world_size: 1
+  rank: 0
+  dist_url: "tcp://localhost:23456"

@@ -1,0 +1,24 @@
+# Dataset test configuration
+train_cfg:
+  transform:
+    image_size: [256, 256]
+    num_workers: 4
+    pin_memory: true
+  subset_size: 100  
+  balance: true
+
+val_cfg:
+  transform:
+    image_size: [256, 256]
+    num_workers: 4
+    pin_memory: true
+  subset_size: 20 
+  balance: true
+
+test_cfg:
+  transform:
+    image_size: [256, 256]
+    num_workers: 4
+    pin_memory: true
+  subset_size: 20  
+  balance: true 

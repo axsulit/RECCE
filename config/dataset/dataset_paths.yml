@@ -1,0 +1,12 @@
+# Dataset root directory
+dataset_root: "./celeb-df-dataset"
+
+# Dataset structure (relative to dataset root)
+structure:
+  splits:
+    train: "train"
+    val: "val"
+    test: "test"
+  classes:
+    real: "real"
+    fake: "fake" 
